@@ -1,0 +1,54 @@
+version: '25.0.3'
+
+services:
+  php:
+    image: php:8.2-apache
+    container_name: php82
+    ports:
+      - 8000:80
+    volumes:
+      - ./html:/var/www/html
+      - ./php/php.ini:/usr/local/etc/php/php.ini
+    build:
+      context: .
+      dockerfile: DockerFile
+  db:
+    image: mysql:8.0
+    container_name: mysql8
+    command: --default-authentication-plugin=caching_sha2_password --pid-file=/var/run/mysqld/mysqld.pid
+    environment:
+      MYSQL_ROOT_PASSWORD: pass
+      MYSQL_DATABASE: securite
+      MYSQL_USER: test
+      MYSQL_PASSWORD: pass
+      MYSQL_INIT_DB: /docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./html/bdd:/docker-entrypoint-initdb.d
+  phpma:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin    
+    environment:
+      PMA_ARBITRARY: 1
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: pass
+      UPLOAD_LIMIT: 20M
+    ports:
+      - 8899:80
+  sonarqube:
+    image: sonarqube:latest
+    container_name: sonarqube
+    ports:
+      - 9000:9000
+  portainer:
+    image: portainer/portainer-ce
+    ports:
+      - 9001:9000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    restart: always
+volumes:
+  portainer_data:
