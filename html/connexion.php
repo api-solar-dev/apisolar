@@ -1,6 +1,7 @@
 <?php
 session_start();
-require 'include/connexion_bdd.php';
+
+require_once 'include/connexion_bdd.php';
 // Gestion des messages en fonction des paramètres GET
 if (isset($_GET['disconnect']) && !empty($_GET['disconnect']) && !isset($_SESSION['ID_User'])) {
     $message_warning = "Vous avez été déconnecté !";
@@ -64,11 +65,11 @@ if (isset($_POST['submit'])) {
 
 <body>
     <?php
-    require 'include/navigation.php';
+    require_once 'include/navigation.php';
     ?>
     <div id="layoutSidenav">
         <?php
-        require 'include/sidebar.php';
+        require_once 'include/sidebar.php';
         ?>
         <div id="layoutSidenav_content">
             <main>
@@ -120,7 +121,7 @@ if (isset($_POST['submit'])) {
                 </div>
             </main>
             <?php
-            require 'include/footer.php';
+            require_once 'include/footer.php';
             ?>
         </div>
     </div>

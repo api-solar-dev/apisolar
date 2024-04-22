@@ -1,6 +1,7 @@
 <?php
+
 session_start();
-require 'include/connexion_bdd.php';
+require_once 'include/connexion_bdd.php';
 
 if (isset($_POST['submit'])) {
     $nom = htmlspecialchars($_POST['nom']);
@@ -16,7 +17,8 @@ if (isset($_POST['submit'])) {
     $espace = strpos($prenom, $vespace);
     if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
         if ($espace === false) {
-            if (!empty($nom) && isset($nom) || !empty($prenom) && isset($prenom) || !empty($email) && isset($email)  || !empty($mdp) && isset($mdp)) {
+            if (!empty($nom) && isset($nom) || !empty($prenom) && isset($prenom) ||
+             !empty($email) && isset($email) || !empty($mdp) && isset($mdp)) {
                 try {
                     $mailexist = $dbh->prepare('SELECT ID_User FROM users WHERE Email = :email');
                     $mailexist->bindParam(':email', $email); // Binding parameter
@@ -27,7 +29,9 @@ if (isset($_POST['submit'])) {
                 }
                 if ($mailexist->rowCount() == 0) {
                     try {
-                        $insertnewuser = $dbh->prepare('INSERT INTO users(Prenom,Nom,Email,Adresse,CodePostal,Ville,Conso,Mdp) VALUES (?,?,?,?,?,?,?,?)');
+                        $insertnewuser = $dbh->prepare('INSERT INTO
+                        users(Prenom,Nom,Email,Adresse,CodePostal,Ville,Conso,Mdp)
+                        VALUES (?,?,?,?,?,?,?,?)');
                         $insertnewuser->bindParam(1, $prenom);
                         $insertnewuser->bindParam(2, $nom);
                         $insertnewuser->bindParam(3, $email);
@@ -71,11 +75,11 @@ if (isset($_POST['submit'])) {
 
 <body>
     <?php
-    require 'include/navigation.php';
+    require_once 'include/navigation.php';
     ?>
     <div id="layoutSidenav">
         <?php
-        require 'include/sidebar.php';
+        require_once 'include/sidebar.php';
         ?>
         <div id="layoutSidenav_content">
             <main>
@@ -172,7 +176,7 @@ if (isset($_POST['submit'])) {
                 </div>
             </main>
             <?php
-            require 'include/footer.php';
+            require_once 'include/footer.php';
             ?>
         </div>
     </div>

@@ -1,7 +1,7 @@
 <?php
 session_start();
-require 'include/connexion_bdd.php';
-require 'include/verif_user_connect.php';
+require_once 'include/connexion_bdd.php';
+require_once 'include/verif_user_connect.php';
 
 $erreur = '';
 
@@ -47,7 +47,7 @@ if (isset($_POST['submit'])) {
                     $longitude = $resp_nominatim[0]['lon'];
                     $latitude = $resp_nominatim[0]['lat'];
 
-                    $url = "https://solar.googleapis.com/v1/buildingInsights:findClosest?location.latitude=$latitude&location.longitude=$longitude&requiredQuality=HIGH&key=YOUR_API_KEY";
+                    $url = "https://solar.googleapis.com/v1/buildingInsights:findClosest?location.latitude=$latitude&location.longitude=$longitude&requiredQuality=HIGH&key=AIzaSyCw2TwxtHdPfxbp-bFQp6NZZIC98Xp9PsM";
 
                     $curl = curl_init();
                     curl_setopt_array($curl, [
@@ -102,11 +102,11 @@ if (isset($_POST['submit'])) {
 
 <body>
     <?php
-    require 'include/navigation.php';
+    require_once 'include/navigation.php';
     ?>
     <div id="layoutSidenav">
         <?php
-        require 'include/sidebar.php';
+        require_once 'include/sidebar.php';
         ?>
         <div id="layoutSidenav_content">
             <main>
@@ -164,7 +164,7 @@ if (isset($_POST['submit'])) {
                 </div>
             </main>
             <?php
-            require 'include/footer.php';
+            require_once 'include/footer.php';
             ?>
         </div>
     </div>
