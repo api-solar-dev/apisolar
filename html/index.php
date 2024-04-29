@@ -1,9 +1,17 @@
 <?php
 session_start();
+require_once 'vendor/autoload.php'; // Charge Composer's autoloader
+
+use Dotenv\Dotenv;
+
+$dotenv = Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
 require_once 'include/connexion_bdd.php';
 require_once 'include/verif_user_connect.php';
 
 $erreur = '';
+$api_key = $_ENV["API_KEY_GOOGLE"];
 
 if (isset($_SESSION['ID_User'])) {
     $conso_par_an = $_SESSION['Conso'];
@@ -14,76 +22,45 @@ if (isset($_SESSION['ID_User'])) {
 
 if (isset($_POST['submit'])) {
     if (!empty($adresse) && isset($adresse)) {
-        $address_format = urlencode($adresse);
-        $codepostal_format = urlencode($codepostal);
-        $ville_format = urlencode($ville);
+        if (isset($_POST['latitude']) && isset($_POST['longitude'])) {
 
-        $url = "https://nominatim.openstreetmap.org/search?street=$address_format&postalcode=$codepostal_format&city=$ville_format&format=json&limit=1";
+            $latitude = htmlspecialchars($_POST['latitude']);
+            $longitude = htmlspecialchars($_POST['longitude']);
+            $url = "https://solar.googleapis.com/v1/buildingInsights:findClosest?location.latitude=$latitude&location.longitude=$longitude&requiredQuality=HIGH&key=$api_key";
 
-        $curl = curl_init();
-        curl_setopt_array($curl, [
-            CURLOPT_URL => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => "GET",
-        ]);
+            $curl = curl_init();
+            curl_setopt_array($curl, [
+                CURLOPT_URL => $url,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 30,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => "GET",
+            ]);
 
-        $curl_nominatim = curl_exec($curl);
-        $err = curl_error($curl);
+            $curl_googlesolar = curl_exec($curl);
+            $err = curl_error($curl);
 
-        curl_close($curl);
+            curl_close($curl);
 
-        if ($err) {
-            $erreur = "Erreur lors de la requête vers le service de géolocalisation.";
-        } else {
-            $resp_nominatim = json_decode($curl_nominatim, true);
-            if ((!empty($resp_nominatim))) {
-                if (!empty($resp_nominatim['code'])) {
-                    $erreur = "Aucune adresse trouvée.";
-                } else {
-                    $longitude = $resp_nominatim[0]['lon'];
-                    $latitude = $resp_nominatim[0]['lat'];
-
-                    $url = "https://solar.googleapis.com/v1/buildingInsights:findClosest?location.latitude=$latitude&location.longitude=$longitude&requiredQuality=HIGH&key=AIzaSyCw2TwxtHdPfxbp-bFQp6NZZIC98Xp9PsM";
-
-                    $curl = curl_init();
-                    curl_setopt_array($curl, [
-                        CURLOPT_URL => $url,
-                        CURLOPT_RETURNTRANSFER => true,
-                        CURLOPT_FOLLOWLOCATION => true,
-                        CURLOPT_MAXREDIRS => 10,
-                        CURLOPT_TIMEOUT => 30,
-                        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-                        CURLOPT_CUSTOMREQUEST => "GET",
-                    ]);
-
-                    $curl_googlesolar = curl_exec($curl);
-                    $err = curl_error($curl);
-
-                    curl_close($curl);
-
-                    if ($err) {
-                        $erreur = "Erreur lors de la requête vers l'API Google Solar.";
-                    } else {
-                        $resp_googlesolar = json_decode($curl_googlesolar, true);
-                        if ((!empty($resp_googlesolar))) {
-                            if (!empty($resp_googlesolar['error'])) {
-                                $erreur = "Désolé, le projet Sunroof n'a pas encore atteint cette adresse.";
-                            }
-                        } else {
-                            $erreur = "Aucune donnée retournée par l'API Google Solar.";
-                        }
-                    }
-                }
+            if ($err) {
+                $erreur = "Erreur lors de la requête vers l'API Google Solar.";
             } else {
-                $erreur = "Aucune adresse trouvée.";
+                $resp_googlesolar = json_decode($curl_googlesolar, true);
+                if ((!empty($resp_googlesolar))) {
+                    if (!empty($resp_googlesolar['error'])) {
+                        $erreur = "Désolé, le projet Sunroof n'a pas encore atteint cette adresse.";
+                    }
+                } else {
+                    $erreur = "Aucune donnée retournée par l'API Google Solar.";
+                }
             }
+        } else {
+            $erreur = "Les champs obligatoires doivent être remplis.";
         }
     } else {
-        $erreur = "Les champs obligatoires doivent être remplis.";
+        $erreur = "Aucune adresse trouvée.";
     }
 }
 ?>
@@ -128,20 +105,38 @@ if (isset($_POST['submit'])) {
                         <div class="card-body">
                             <form method="post">
                                 <div class="form-group">
-                                    <label for="disabledTextInput">Adresse</label>
-                                    <input type="text" id="disabledTextInput" class="form-control" placeholder="<?php echo $adresse . ' ' . $codepostal . ' ' . $ville ?>" disabled>
+                                    <label for="disabledTextInput">Consommation Annuelle</label>
+                                    <input type="text" id="disabledTextInput" class="form-control"
+                                    placeholder="<?php echo $conso_par_an; ?>" disabled>
                                 </div>
                                 <div class="form-group">
-                                    <label for="disabledTextInput">Consommation Annuelle</label>
-                                    <input type="text" id="disabledTextInput" class="form-control" placeholder="<?php echo $conso_par_an; ?>" disabled>
+                                    <label for="disabledTextInput">Adresse</label>
+                                    <input type="text" id="disabledTextInput" class="form-control"
+                                    placeholder="<?php echo $adresse . ' ' . $codepostal . ' ' . $ville ?>" disabled>
                                 </div>
-                                <button type="submit" name="submit" class="btn btn-primary mt-3">Lancer le simulateur</button>
+                                <p>Aller sur ce site pour determiner les <a href="https://www.coordonnees-gps.fr/">
+                                    coordonnees gps</a></p>
+                                <div class="form-group">
+                                    <label for="disabledTextInput">Latitude</label>
+                                    <input type="text" class="form-control" name="latitude"
+                                    value="<?php if (isset($latitude)) { echo $latitude; } ?>" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="disabledTextInput">Longitude</label>
+                                    <input type="text" class="form-control" name="longitude"
+                                    value="<?php if (isset($longitude)) { echo $longitude; } ?>" required>
+                                </div>
+                                <button type="submit" name="submit" class="btn btn-primary mt-3">
+                                    Lancer le simulateur</button>
                             </form>
                         </div>
                     </div>
-                    <?php if (isset($resp_googlesolar)) {
+                    <?php if (isset($resp_googlesolar) && !isset($resp_googlesolar['error'])) {
                         foreach ($resp_googlesolar['solarPotential']['solarPanelConfigs'] as $resp_googlesolar2) {
-                            if ($resp_googlesolar['solarPotential']['maxArrayPanelsCount'] == $resp_googlesolar2['panelsCount']) {
+                            if (
+                                $resp_googlesolar['solarPotential']['maxArrayPanelsCount'] ==
+                                $resp_googlesolar2['panelsCount']
+                            ) {
                                 $totalElectricityProduction = $resp_googlesolar2['yearlyEnergyDcKwh'];
                             }
                         }
@@ -151,12 +146,18 @@ if (isset($_POST['submit'])) {
                     ?>
                         <div class="card mb-4">
                             <div class="card-body">
-                                <h5>Économie d'électricité estimée en utilisant le nombre maximal de panneaux solaires soit <?php echo $resp_googlesolar['solarPotential']['maxArrayPanelsCount'] ?> :</h5>
-                                <p><?php echo 'Tu généreras en électricité ' . round($totalElectricityProduction, 2) . ' kWh/an soit ' . round($totalElectricityProduction_euros, 2) . ' €/an'; ?></p>
+                                <h5>Économie d'électricité estimée en utilisant le nombre maximal
+                                    de panneaux solaires soit
+                                    <?php echo $resp_googlesolar['solarPotential']['maxArrayPanelsCount'] ?> :</h5>
+                                <p><?php echo 'Tu généreras en électricité ' . round($totalElectricityProduction, 2)
+                                        . ' kWh/an soit ' . round($totalElectricityProduction_euros, 2) . '
+                                         €/an'; ?></p>
                                 <p><?php if ($economie_electricite > 0) {
-                                        echo 'Tu gagneras ' . round($economie_electricite, 2) . ' kWh/an soit ' . round($economie_electricite_euros, 2) . ' €/an';
+                                        echo 'Tu gagneras ' . round($economie_electricite, 2) . ' 
+                                        kWh/an soit ' . round($economie_electricite_euros, 2) . ' €/an';
                                     } else {
-                                        echo 'Tu perdras ' . round($economie_electricite, 2) . ' kWh/an soit ' . round($economie_electricite_euros, 2) . ' €/an';
+                                        echo 'Tu perdras ' . round($economie_electricite, 2) . ' 
+                                        kWh/an soit ' . round($economie_electricite_euros, 2) . ' €/an';
                                     } ?></p>
                             </div>
                         </div>

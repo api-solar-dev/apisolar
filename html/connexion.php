@@ -1,5 +1,11 @@
 <?php
 session_start();
+require_once 'vendor/autoload.php'; // Charge Composer's autoloader
+
+use Dotenv\Dotenv;
+
+$dotenv = Dotenv::createImmutable(__DIR__);
+$dotenv->load();
 
 require_once 'include/connexion_bdd.php';
 // Gestion des messages en fonction des paramètres GET
